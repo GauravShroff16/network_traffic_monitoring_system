@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Traffic Pulse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #0f0f0f, #500068);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            text-shadow: 0 0 5px #a100b6, 0 0 10px #00757d;
+        }
+
+        .header-container {
+            width: 100%;
+            background: black;
+            color: #ffffff;
+            text-align: center;
+            padding: 2rem 0;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+        }
+
+        .header-container h1 {
+            margin:2rem 0;
+            font-size: 2.5rem;
+        }
+
+        .header-container p {
+            margin: 2rem 0 0;
+            font-size: 1.2rem;
+            color: #b900c3;
+        }
+
+        .title h1 {
+            font-size: 3rem;
+            margin: 0;
+            color: #ffffff;
+        }
+
+        .catchphrase {
+            font-size: 1.2rem;
+            color: #a9a9a9;
+            margin-top: 0.5rem;
+        }
+
+        .login-card {
+            background: rgba(0, 0, 0, 0.516);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+            width: 100%;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            color: #ffffff;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+
+        input {
+            padding: 0.8rem;
+            width: 50%;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+            border: 1px solid ś#ffffff;
+            background: rgba(26, 26, 26, 0.8);
+            color: #b900c3;
+        }
+
+        .btn {
+            background-color: #00aeba;
+            color: #121212;
+            padding: 0.8rem;
+            width: 50%;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background-color: #00e6b3;
+            box-shadow: 0 0 10px #00ffcc;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-container">
+    <div class="title">
+        <h1>Traffic Pulse</h1>
+    </div>
+    <div class="catchphrase">
+        <p>Stay ahead, Monitor, Analyze, Protect</p>
+    </div>
+</div>
+
+<div class="login-card">
+    <h2>Login</h2>
+    <form method="POST" action="/login">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required>
+        
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+        
+        <button type="submit" class="btn">Login</button>
+    </form>
+    
+    {% if error %}
+        <p class="error-message">{{ error }}</p>
+    {% endif %}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analysis - Network Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #0f0f0f, #6f0091);
+            color: #ffffff;
+            text-shadow: 0 0 5px #a100b6, 0 0 10px #00757d;
+        }
+
+        header {
+            text-align: center;
+            padding: 1.5rem 0;
+            background: rgba(18, 18, 18, 0);
+            border-bottom: 2px solid #00aeba;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        nav {
+            text-align: center;
+            margin: 1rem 0;
+        }
+        nav a {
+            color: #00aeba;
+            text-decoration: none;
+            margin: 0 1rem;
+            font-size: 1.2rem;
+        }
+        nav a:hover {
+            text-shadow: 0 0 10px #00a1bd;
+        }
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            padding: 2rem;
+            background-color: black;
+        }
+
+        h2 {
+            text-align: center;
+            color: #00aeba;
+            font-size: 2rem;
+            margin-top: 20px;
+        }
+
+        .insights-container {
+            position: absolute;
+            top: 10%;
+            right: 10%;
+            width: 700px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 1rem;
+            color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #00aeba;
+        }
+
+        .insights-container h3 {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .insights-container p {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Traffic Pulse - Data Analytics</h1>
+        <nav>
+            <a href="/">Back to Dashboard</a>
+        </nav>
+    </header>
+
+    <!-- Line chart for Traffic Data -->
+    <h2>Line Graph-Traffic Data Over Time</h2>
+    <div class="chart-container">
+        <canvas id="trafficChart"></canvas>
+    </div>
+
+    <!-- Pie chart for Protocol Data -->
+    <h2>Pie Chart-Protocol Distribution</h2>
+    <div class="chart-container" style="position: relative;">
+        <canvas id="protocolChart"></canvas>
+
+        <!-- Insights Container -->
+        <div class="insights-container">
+            <h3>Protocol Insights</h3>
+            <p id="totalProtocols">Total Protocols: 0</p>
+            <p id="mostUsedProtocol">Most Used Protocol: </p>
+            <p id="tcpPercentage">TCP: 0%</p>
+            <p id="udpPercentage">UDP: 0%</p>
+            <p id="icmpPercentage">ICMP: 0%</p>
+            <p id="totalSentData">Total Sent Data: 0 Bytes</p>
+            <p id="totalReceivedData">Total Received Data: 0 Bytes</p>
+            <p id="avgSentData">Avg Sent Data per Device: 0 Bytes</p>
+            <p id="avgReceivedData">Avg Received Data per Device: 0 Bytes</p>
+            <p id="mostActiveDevice">Most Active Device: </p>
+            <p id="leastActiveDevice">Least Active Device: </p>
+        </div>
+    </div>
+
+    <!-- Hidden table for protocol data -->
+    <table id="protocolTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>Protocol</th>
+                <th>Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>TCP</td>
+                <td>1200</td>
+            </tr>
+            <tr>
+                <td>UDP</td>
+                <td>800</td>
+            </tr>
+            <tr>
+                <td>ICMP</td>
+                <td>300</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchTrafficData() {
+            try {
+                const response = await fetch('/get_traffic_data');
+                if (!response.ok) throw new Error('Failed to fetch traffic data');
+                const data = await response.json();
+
+                const labels = Object.keys(data.devices);
+                const sentData = labels.map(ip => data.devices[ip].sent);
+                const receivedData = labels.map(ip => data.devices[ip].received);
+
+                // Line Chart - Sent and Received Data
+                const ctx = document.getElementById('trafficChart').getContext('2d');
+                const trafficChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Sent Bytes',
+                            data: sentData,
+                            borderColor: '#00aeba',
+                            fill: false,
+                        }, {
+                            label: 'Received Bytes',
+                            data: receivedData,
+                            borderColor: '#b900c3',
+                            fill: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'IP Address'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Bytes'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Pie Chart - Protocols from the Table
+                const protocolTable = document.getElementById('protocolTable');
+                const protocolRows = protocolTable.getElementsByTagName('tr');
+                const protocolLabels = [];
+                const protocolValues = [];
+
+                for (let i = 1; i < protocolRows.length; i++) { // Starting from 1 to skip header row
+                    const cells = protocolRows[i].getElementsByTagName('td');
+                    protocolLabels.push(cells[0].innerText);  // Protocol Name (TCP, UDP, etc.)
+                    protocolValues.push(parseInt(cells[1].innerText));  // Protocol Count
+                }
+
+                const pieCtx = document.getElementById('protocolChart').getContext('2d');
+                const protocolChart = new Chart(pieCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: protocolLabels,
+                        datasets: [{
+                            label: 'Protocols',
+                            data: protocolValues,
+                            backgroundColor: ['#00aeba', '#b900c3', '#00757d', '#a100b6', '#6f0091'],
+                        }]
+                    },
+                    options: {
+                        responsive: true
+                    }
+                });
+
+                // Insights Calculations
+                const totalProtocols = protocolValues.reduce((a, b) => a + b, 0);
+                const tcpCount = protocolValues[0];
+                const udpCount = protocolValues[1];
+                const icmpCount = protocolValues[2];
+
+                const totalSent = sentData.reduce((a, b) => a + b, 0);
+                const totalReceived = receivedData.reduce((a, b) => a + b, 0);
+                const avgSent = totalSent / sentData.length;
+                const avgReceived = totalReceived / receivedData.length;
+
+                const mostActiveDevice = labels.reduce((maxIp, ip) => {
+                    return sentData[labels.indexOf(maxIp)] + receivedData[labels.indexOf(maxIp)] >
+                           sentData[labels.indexOf(ip)] + receivedData[labels.indexOf(ip)] ? maxIp : ip;
+                });
+                const leastActiveDevice = labels.reduce((minIp, ip) => {
+                    return sentData[labels.indexOf(minIp)] + receivedData[labels.indexOf(minIp)] <
+                           sentData[labels.indexOf(ip)] + receivedData[labels.indexOf(ip)] ? minIp : ip;
+                });
+
+                // Display insights
+                document.getElementById('totalProtocols').textContent = `Total Protocols: ${totalProtocols}`;
+                document.getElementById('tcpPercentage').textContent = `TCP: ${(tcpCount / totalProtocols * 100).toFixed(1)}%`;
+                document.getElementById('udpPercentage').textContent = `UDP: ${(udpCount / totalProtocols * 100).toFixed(1)}%`;
+                document.getElementById('icmpPercentage').textContent = `ICMP: ${(icmpCount / totalProtocols * 100).toFixed(1)}%`;
+
+                document.getElementById('totalSentData').textContent = `Total Sent Data: ${totalSent} Bytes`;
+                document.getElementById('totalReceivedData').textContent = `Total Received Data: ${totalReceived} Bytes`;
+                document.getElementById('avgSentData').textContent = `Avg Sent Data per Device: ${avgSent.toFixed(0)} Bytes`;
+                document.getElementById('avgReceivedData').textContent = `Avg Received Data per Device: ${avgReceived.toFixed(0)} Bytes`;
+                document.getElementById('mostActiveDevice').textContent = `Most Active Device: ${mostActiveDevice}`;
+                document.getElementById('leastActiveDevice').textContent = `Least Active Device: ${leastActiveDevice}`;
+
+                // Most Used Protocol
+                const mostUsed = Math.max(tcpCount, udpCount, icmpCount);
+                let mostUsedProtocol = '';
+                if (mostUsed === tcpCount) {
+                    mostUsedProtocol = 'TCP';
+                } else if (mostUsed === udpCount) {
+                    mostUsedProtocol = 'UDP';
+                } else if (mostUsed === icmpCount) {
+                    mostUsedProtocol = 'ICMP';
+                }
+                document.getElementById('mostUsedProtocol').textContent = `Most Used Protocol: ${mostUsedProtocol}`;
+
+            } catch (error) {
+                console.error('Error fetching traffic data:', error);
+            }
+        }
+
+        fetchTrafficData();
+    </script>
+
+</body>
+</html>

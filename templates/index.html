@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Monitor Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #0f0f0f, #6f0091);
+            color: #ffffff;
+            text-shadow: 0 0 5px #a100b6, 0 0 10px #00757d;
+        }
+
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        header {
+            text-align: center;
+            padding: 1.5rem 0;
+            background: rgba(18, 18, 18, 0);
+            border-bottom: 2px solid #6ff5ff;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        nav {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        nav a {
+            color: #a9f9ff;
+            text-decoration: none;
+            margin: 0 1rem;
+            font-size: 1.2rem;
+        }
+
+        nav a:hover {
+            text-shadow: 0 0 10px #94efff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+        }
+
+        table th, table td {
+            font-family: 'Roboto', sans-serif;
+            border: 1px solid #00aeba;
+            padding: 0.8rem;
+            text-align: left;
+        }
+
+        table th {
+            background: rgba(0, 35, 72, 0.31);
+        }
+
+        table td {
+            background: rgba(0, 57, 70, 0.595);
+        }
+
+        table tr:hover td {
+            background: rgba(0, 33, 42, 0.8);
+        }
+
+        .thresholds {
+            background: #121212;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        button {
+            background: #7df6ff;
+            color: #121212;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #00e6b3;
+            box-shadow: 0 0 10px #00ffcc;
+        }
+
+        /* Style for the Pie chart */
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            padding: 2rem;
+            background-color: black;
+        }
+
+        table tr.alert-row td {
+            background-color: #ffcccc;
+        }
+        /* Style for the Protocol Filter Dropdown */
+#protocol-dropdown {
+    background: #121212;
+    color: #41f2ff;
+    border: 1px solid #c3fbff;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 5px;
+    margin-top: 1rem;
+    width: auto;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#protocol-dropdown option {
+    background: #121212;
+    color: #8ff8ff;
+    padding: 0.8rem 1.5rem;
+    font-family: 'Orbitron', sans-serif;
+    border: 1px solid #8df7ff;
+    transition: background-color 0.3s ease;
+}
+
+/* Hover effect for the dropdown */
+#protocol-dropdown:hover {
+    background-color: #b3faff;
+    color: #121212;
+}
+
+/* Hover effect for the options */
+#protocol-dropdown option:hover {
+    background-color: #c0fbff;
+    color: #121212;
+}
+
+/* Focus effect for dropdown */
+#protocol-dropdown:focus {
+    outline: none;
+    border: 1px solid #00e6b3;
+    box-shadow: 0 0 5px #00e6b3;
+}
+
+    </style>
+</head>
+<body>
+     <!--video class="video-background" autoplay muted loop>
+        <source src="C:\\Users\\madhu\\OneDrive\\Desktop\\network_monitor\\templates\\wallpapervid.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>-->
+
+    <header>
+        <h1>Traffic Pulse</h1>
+        <h2>Real-Time Cybersecurity & Adaptive Network Monitoring with analysis</h2>
+        <nav>
+            <a href="#thresholds">Thresholds</a>
+            <a href="#traffic">Traffic Data</a>
+            <a href="/data_analysis">Data Analysis</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <section id="thresholds" class="thresholds">
+            {% if flagged_devices %}
+    <h3>DDoS Potential Devices</h3>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>IP Address</th>
+                <th>Sent</th>
+                <th>Received</th>
+                <th>Hostname</th>
+                <th>TTL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ip, data in flagged_devices.items() %}
+                <tr>
+                    <td>{{ ip }}</td>
+                    <td>{{ data.sent }}</td>
+                    <td>{{ data.received }}</td>
+                    <td>{{ data.hostname }}</td>
+                    <td>{{ data.ttl }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>:></p>
+    {% endif %}
+
+            <h2>Current Thresholds</h2>
+            <p>Sent: <span id="sent-threshold" aria-live="polite"></span> bytes</p>
+            <p>Received: <span id="received-threshold" aria-live="polite"></span> bytes</p>
+
+            <h2>Update Thresholds</h2>
+            <form method="POST" action="/set_threshold">
+                <label for="sent">Sent Threshold (bytes):</label>
+                <input type="number" name="sent_threshold" required>
+                <label for="received">Received Threshold (bytes):</label>
+                <input type="number" name="received_threshold" required>
+                <button type="submit">Update</button>
+            </form>
+        </section>
+<!-- Filter Dropdown for Protocol -->
+<select id="protocol-dropdown" onchange="fetchTrafficData()">
+    <option value="all">All Protocols</option>
+    <option value="TCP">TCP</option>
+    <option value="UDP">UDP</option>
+    <option value="ICMP">ICMP</option>
+    <!-- Add more protocols as needed -->
+</select>
+<!-- Threshold Filter Checkbox -->
+<label for="threshold-filter">Show only devices exceeding the threshold:</label>
+<input type="checkbox" id="threshold-filter" onchange="fetchTrafficData()">
+
+        <section id="traffic" class="thresholds">
+            <button onclick="refreshTrafficData()">Refresh</button>
+
+            <h2>Device Traffic Data</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>Bytes Sent</th>
+                        <th>Bytes Received</th>
+                        <th>Protocols</th>
+                        <th>Hostname</th>
+                        <th>Packet Length</th>
+                        <th>Category</th>
+                        <th>DDoS Alert</th>
+                    </tr>
+                </thead>
+                <tbody id="device-traffic-body">
+                    <!-- Rows populated dynamically -->
+                </tbody>
+            </table>
+            
+
+            <!-- Pie Chart for Protocol Distribution -->
+            <div class="chart-container">
+                <canvas id="protocolChart"></canvas>
+            </div>
+            
+
+            <script>
+               // Function to refresh the table
+               function refreshTrafficData() {
+        // Clear existing rows in the table
+        const tableBody = document.getElementById('device-traffic-body');
+        tableBody.innerHTML = '';  // Clears the table body
+          // Fetch new data and update the table
+    }
+
+// Fetch traffic data and populate the table
+async function fetchTrafficData() {
+    const protocolFilter = document.getElementById('protocol-dropdown').value; // Get selected protocol filter
+    const thresholdFilter = document.getElementById('threshold-filter').checked; // Get state of the threshold checkbox
+    try {
+        // Include threshold filter in the request URL
+        const response = await fetch(`/get_filtered_traffic_data?protocol=${protocolFilter}&above_threshold=${thresholdFilter}`);
+        if (!response.ok) throw new Error('Failed to fetch traffic data');
+        const data = await response.json();
+
+        const tableBody = document.getElementById('device-traffic-body');
+        tableBody.innerHTML = ''; // Clear existing rows
+
+        const protocolCount = { TCP: 0, UDP: 0, ICMP: 0 }; // Initialize protocol count
+
+        // Process and populate table rows
+        for (const [ip, stats] of Object.entries(data.devices)) {
+            const row = document.createElement('tr');
+            
+            // Check if the device exceeds the threshold
+            const isAboveThreshold = stats.sent > data.thresholds.sent || stats.received > data.thresholds.received;
+
+            // If the threshold filter is checked, only display devices exceeding the threshold
+            if (thresholdFilter && !isAboveThreshold) {
+                continue; // Skip devices that do not exceed the threshold
+            }
+
+            // Set row color to red if flagged
+            if (isAboveThreshold) {
+                row.style.backgroundColor = '#ff4d4d';  // Red background for flagged devices
+            }
+
+            // Increment protocol count
+            stats.protocols.forEach(protocol => {
+                if (protocolCount[protocol]) {
+                    protocolCount[protocol]++;
+                }
+            });
+
+            // DDoS status
+            const ddosStatus = stats.ddos ? "⚠️ DDoS Detected" : "No";
+
+            // Create table row dynamically
+            row.innerHTML = `
+                <td>${ip}</td>
+                <td>${stats.sent}</td>
+                <td>${stats.received}</td>
+                <td>${stats.protocols.join(', ')}</td>
+                <td>${stats.hostname}</td>
+                <td>${stats.length}</td>
+                <td>${stats.category || 'N/A'}</td>
+                <td>${ddosStatus}</td>
+            `;
+
+            // Append row to table body
+            tableBody.appendChild(row);
+        }
+
+        // Create Pie Chart based on protocol data
+        const protocolLabels = Object.keys(protocolCount);
+        const protocolValues = Object.values(protocolCount);
+
+        const pieCtx = document.getElementById('protocolChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: protocolLabels,
+                datasets: [{
+                    label: 'Protocols',
+                    data: protocolValues,
+                    backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe'],
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Fetch traffic data every 4 seconds to keep the table updated dynamically
+setInterval(fetchTrafficData, 4000);
+fetchTrafficData();  // Initial fetch
+ // Initial fetch
+            </script>            
+        </section>
+    </div>
+</body>
+</html>
